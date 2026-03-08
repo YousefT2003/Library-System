@@ -1,0 +1,187 @@
+{% extends "layout.html" %}
+{% block title %}Students — LibraryMS{% endblock %}
+{% block page_title %}Student Management{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary" onclick="openModal('addStudentModal')">
+    <span class="material-icons-outlined">person_add</span> Register Student
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Search -->
+<div class="filters-bar">
+    <form method="GET" action="{{ url_for('students.index') }}" class="filter-form">
+        <div class="input-icon">
+            <span class="material-icons-outlined">search</span>
+            <input type="text" name="search" placeholder="Search by ID, name, department..." value="{{ search }}">
+        </div>
+        <button type="submit" class="btn btn-secondary">Search</button>
+    </form>
+</div>
+
+<!-- Student History View -->
+{% if view == 'history' and student %}
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+        <h2>Borrowing History: {{ student.first_name }} {{ student.last_name }} ({{ student.student_id }})</h2>
+        <a href="{{ url_for('students.index') }}" class="btn btn-secondary btn-sm">Back</a>
+    </div>
+    <div class="card-body table-responsive">
+        <table class="table">
+            <thead><tr><th>Book</th><th>ISBN</th><th>Borrow Date</th><th>Due Date</th><th>Return Date</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for r in history %}
+            <tr>
+                <td>{{ r.book_title }}</td>
+                <td><code>{{ r.isbn }}</code></td>
+                <td>{{ r.borrow_date }}</td>
+                <td>{{ r.due_date }}</td>
+                <td>{{ r.return_date or '—' }}</td>
+                <td><span class="badge badge-{{ 'success' if r.status == 'returned' else ('danger' if r.status == 'overdue' else 'warning') }}">{{ r.status | title }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty-state">No borrowing history.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Students Table -->
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Class</th>
+                    <th>Contact</th>
+                    <th>Active Borrows</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td><code>{{ s.student_id }}</code></td>
+                    <td><strong>{{ s.first_name }} {{ s.last_name }}</strong></td>
+                    <td>{{ s.department or '—' }}</td>
+                    <td>{{ s.class_name or '—' }}</td>
+                    <td>{{ s.email or s.phone or '—' }}</td>
+                    <td>
+                        {% if s.active_borrows >= s.max_books %}
+                        <span class="badge badge-danger">{{ s.active_borrows }}/{{ s.max_books }}</span>
+                        {% elif s.active_borrows > 0 %}
+                        <span class="badge badge-warning">{{ s.active_borrows }}/{{ s.max_books }}</span>
+                        {% else %}
+                        <span class="badge badge-success">0/{{ s.max_books }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions-cell">
+                        <a href="{{ url_for('students.history', student_id=s.id) }}" class="btn btn-sm btn-secondary" title="History">
+                            <span class="material-icons-outlined">history</span>
+                        </a>
+                        <button class="btn btn-sm btn-secondary" onclick='openEditStudent({{ s | tojson }})' title="Edit">
+                            <span class="material-icons-outlined">edit</span>
+                        </button>
+                        <form method="POST" action="{{ url_for('students.delete', student_id=s.id) }}" class="inline-form"
+                              onsubmit="return confirm('Delete this student?')">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                <span class="material-icons-outlined">delete</span>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-state">No students found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Student Modal -->
+<div class="modal-overlay" id="addStudentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Register New Student</h2>
+            <button class="modal-close" onclick="closeModal('addStudentModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('students.create') }}">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>Student ID *</label><input type="text" name="student_id" required maxlength="50"></div>
+                    <div class="form-group"><label>First Name *</label><input type="text" name="first_name" required maxlength="100"></div>
+                    <div class="form-group"><label>Last Name *</label><input type="text" name="last_name" required maxlength="100"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Email</label><input type="email" name="email" maxlength="255"></div>
+                    <div class="form-group"><label>Phone</label><input type="text" name="phone" maxlength="20"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Department</label><input type="text" name="department" maxlength="100"></div>
+                    <div class="form-group"><label>Class</label><input type="text" name="class_name" maxlength="100"></div>
+                    <div class="form-group"><label>Max Books</label><input type="number" name="max_books" value="3" min="1" max="10"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addStudentModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal-overlay" id="editStudentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Edit Student</h2>
+            <button class="modal-close" onclick="closeModal('editStudentModal')">&times;</button>
+        </div>
+        <form method="POST" id="editStudentForm">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>First Name *</label><input type="text" name="first_name" id="es_first_name" required></div>
+                    <div class="form-group"><label>Last Name *</label><input type="text" name="last_name" id="es_last_name" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Email</label><input type="email" name="email" id="es_email"></div>
+                    <div class="form-group"><label>Phone</label><input type="text" name="phone" id="es_phone"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Department</label><input type="text" name="department" id="es_department"></div>
+                    <div class="form-group"><label>Class</label><input type="text" name="class_name" id="es_class_name"></div>
+                    <div class="form-group"><label>Max Books</label><input type="number" name="max_books" id="es_max_books" value="3" min="1"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editStudentModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditStudent(s) {
+    document.getElementById('editStudentForm').action = '/students/update/' + s.id;
+    document.getElementById('es_first_name').value = s.first_name || '';
+    document.getElementById('es_last_name').value = s.last_name || '';
+    document.getElementById('es_email').value = s.email || '';
+    document.getElementById('es_phone').value = s.phone || '';
+    document.getElementById('es_department').value = s.department || '';
+    document.getElementById('es_class_name').value = s.class_name || '';
+    document.getElementById('es_max_books').value = s.max_books || 3;
+    openModal('editStudentModal');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard — LibraryMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="stats-grid">
+    <div class="stat-card stat-books">
+        <div class="stat-icon"><span class="material-icons-outlined">menu_book</span></div>
+        <div class="stat-info">
+            <h3>{{ total_books }}</h3>
+            <p>Total Books</p>
+        </div>
+    </div>
+    <div class="stat-card stat-students">
+        <div class="stat-icon"><span class="material-icons-outlined">school</span></div>
+        <div class="stat-info">
+            <h3>{{ total_students }}</h3>
+            <p>Students</p>
+        </div>
+    </div>
+    <div class="stat-card stat-borrowed">
+        <div class="stat-icon"><span class="material-icons-outlined">swap_horiz</span></div>
+        <div class="stat-info">
+            <h3>{{ total_borrowed }}</h3>
+            <p>Borrowed</p>
+        </div>
+    </div>
+    <div class="stat-card stat-overdue">
+        <div class="stat-icon"><span class="material-icons-outlined">warning</span></div>
+        <div class="stat-info">
+            <h3>{{ total_overdue }}</h3>
+            <p>Overdue</p>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Most Borrowed Books -->
+    <div class="card">
+        <div class="card-header">
+            <h2><span class="material-icons-outlined">trending_up</span> Most Borrowed Books</h2>
+        </div>
+        <div class="card-body">
+            {% if most_borrowed %}
+            <table class="table">
+                <thead><tr><th>Title</th><th>Author</th><th>Borrows</th></tr></thead>
+                <tbody>
+                {% for b in most_borrowed %}
+                <tr>
+                    <td>{{ b.title }}</td>
+                    <td>{{ b.author }}</td>
+                    <td><span class="badge badge-primary">{{ b.borrow_count }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">No borrow data yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top Borrowers -->
+    <div class="card">
+        <div class="card-header">
+            <h2><span class="material-icons-outlined">star</span> Top Borrowers</h2>
+        </div>
+        <div class="card-body">
+            {% if top_borrowers %}
+            <table class="table">
+                <thead><tr><th>Student</th><th>Department</th><th>Borrows</th></tr></thead>
+                <tbody>
+                {% for s in top_borrowers %}
+                <tr>
+                    <td>{{ s.first_name }} {{ s.last_name }}</td>
+                    <td>{{ s.department }}</td>
+                    <td><span class="badge badge-primary">{{ s.borrow_count }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">No data yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Low Stock Alerts -->
+    <div class="card">
+        <div class="card-header">
+            <h2><span class="material-icons-outlined">inventory</span> Low Stock Alert</h2>
+        </div>
+        <div class="card-body">
+            {% if low_stock %}
+            <table class="table">
+                <thead><tr><th>Book</th><th>Available</th><th>Total</th></tr></thead>
+                <tbody>
+                {% for b in low_stock %}
+                <tr>
+                    <td>{{ b.title }}</td>
+                    <td><span class="badge badge-danger">{{ b.available_copies }}</span></td>
+                    <td>{{ b.total_copies }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">All books well-stocked.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Overdue Books -->
+    <div class="card">
+        <div class="card-header">
+            <h2><span class="material-icons-outlined">schedule</span> Overdue Books</h2>
+        </div>
+        <div class="card-body">
+            {% if overdue_records %}
+            <table class="table">
+                <thead><tr><th>Student</th><th>Book</th><th>Days Overdue</th></tr></thead>
+                <tbody>
+                {% for r in overdue_records %}
+                <tr class="row-overdue">
+                    <td>{{ r.first_name }} {{ r.last_name }}</td>
+                    <td>{{ r.book_title }}</td>
+                    <td><span class="badge badge-danger">{{ r.overdue_days }} days</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">No overdue books! 🎉</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

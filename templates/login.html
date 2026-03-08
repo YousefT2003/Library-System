@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block title %}Login — LibraryMS{% endblock %}
+{% block body_class %}login-page{% endblock %}
+
+{% block content_nosidebar %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <span class="material-icons-outlined login-icon">local_library</span>
+            <h1>LibraryMS</h1>
+            <p>Library Management System</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" style="margin-bottom: 1rem;">
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.login_post') }}" class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-icon">
+                    <span class="material-icons-outlined">person</span>
+                    <input type="text" id="username" name="username" placeholder="Enter username" required autofocus>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-icon">
+                    <span class="material-icons-outlined">lock</span>
+                    <input type="password" id="password" name="password" placeholder="Enter password" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+                <span class="material-icons-outlined">login</span>
+                Sign In
+            </button>
+        </form>
+        <p class="login-footer">
+    Don't have an account? <a href="{{ url_for('auth.signup') }}" style="color: #3b82f6; font-weight: bold;">Sign Up</a>
+</p>
+        <p class="login-footer">Default: admin / admin123</p>
+    </div>
+</div>
+{% endblock %}

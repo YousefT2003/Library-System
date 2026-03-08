@@ -1,0 +1,68 @@
+{% extends 'layout.html' %}
+
+{% block content_nosidebar %}
+<style>
+    .center-wrapper {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f4f7f6;
+        z-index: 9999;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 400px;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="center-wrapper">
+    <div class="login-container">
+        <h2>Create Account</h2>
+
+        <form action="{{ url_for('auth.signup') }}" method="POST">
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="full_name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" required>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">Sign Up</button>
+        </form>
+
+        <p class="text-center">
+            Already have an account?
+            <a href="{{ url_for('auth.login') }}">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

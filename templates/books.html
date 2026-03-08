@@ -1,0 +1,247 @@
+{% extends "layout.html" %}
+{% block title %}Books — LibraryMS{% endblock %}
+{% block page_title %}Book Management{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary" onclick="openModal('addBookModal')">
+    <span class="material-icons-outlined">add</span> Add Book
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Filters -->
+<div class="filters-bar">
+    <form method="GET" action="{{ url_for('books.index') }}" class="filter-form">
+        <div class="input-icon">
+            <span class="material-icons-outlined">search</span>
+            <input type="text" name="search" placeholder="Search by title, author, ISBN..." value="{{ search }}">
+        </div>
+        <select name="category_id" class="form-select">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if cat.id == category_id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <label class="checkbox-label">
+            <input type="checkbox" name="available_only" value="1" {% if available_only %}checked{% endif %}>
+            Available Only
+        </label>
+        <button type="submit" class="btn btn-secondary">Filter</button>
+    </form>
+</div>
+
+<!-- Books Table -->
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>ISBN</th>
+                    <th>Category</th>
+                    <th>Available</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                <tr>
+                    <td><strong>{{ book.title }}</strong></td>
+                    <td>{{ book.author }}</td>
+                    <td><code>{{ book.isbn }}</code></td>
+                    <td>{{ book.category_name or '—' }}</td>
+                    <td>
+                        {% if book.available_copies > 0 %}
+                        <span class="badge badge-success">{{ book.available_copies }}</span>
+                        {% else %}
+                        <span class="badge badge-danger">0</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ book.total_copies }}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-sm btn-secondary" onclick='openEditBook({{ book | tojson }})'>
+                            <span class="material-icons-outlined">edit</span>
+                        </button>
+                        <form method="POST" action="{{ url_for('books.delete', book_id=book.id) }}" class="inline-form"
+                              onsubmit="return confirm('Delete this book?')">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <span class="material-icons-outlined">delete</span>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-state">No books found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if total > per_page %}
+<div class="pagination">
+    {% set pages = (total / per_page) | round(0, 'ceil') | int %}
+    {% for p in range(1, pages + 1) %}
+    <a href="?page={{ p }}&search={{ search }}&category_id={{ category_id or '' }}&available_only={{ '1' if available_only else '' }}"
+       class="btn btn-sm {% if p == page %}btn-primary{% else %}btn-secondary{% endif %}">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block modals %}
+<!-- Add Book Modal -->
+<div class="modal-overlay" id="addBookModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Add New Book</h2>
+            <button class="modal-close" onclick="closeModal('addBookModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('books.create') }}">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" name="title" required maxlength="255">
+                    </div>
+                    <div class="form-group">
+                        <label>Author *</label>
+                        <input type="text" name="author" required maxlength="255">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ISBN *</label>
+                        <input type="text" name="isbn" required maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category_id" class="form-select">
+                            <option value="">Select category</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Edition</label>
+                        <input type="text" name="edition" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Publisher</label>
+                        <input type="text" name="publisher" maxlength="255">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Publish Year</label>
+                        <input type="number" name="publish_year" min="1000" max="2099">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Copies</label>
+                        <input type="number" name="total_copies" value="1" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addBookModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Book</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Book Modal -->
+<div class="modal-overlay" id="editBookModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Edit Book</h2>
+            <button class="modal-close" onclick="closeModal('editBookModal')">&times;</button>
+        </div>
+        <form method="POST" id="editBookForm">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" name="title" id="edit_title" required maxlength="255">
+                    </div>
+                    <div class="form-group">
+                        <label>Author *</label>
+                        <input type="text" name="author" id="edit_author" required maxlength="255">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ISBN *</label>
+                        <input type="text" name="isbn" id="edit_isbn" required maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category_id" id="edit_category_id" class="form-select">
+                            <option value="">Select category</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Edition</label>
+                        <input type="text" name="edition" id="edit_edition" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Publisher</label>
+                        <input type="text" name="publisher" id="edit_publisher" maxlength="255">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Publish Year</label>
+                        <input type="number" name="publish_year" id="edit_publish_year" min="1000" max="2099">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Copies</label>
+                        <input type="number" name="total_copies" id="edit_total_copies" value="1" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" id="edit_description" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editBookModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Book</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditBook(book) {
+    document.getElementById('editBookForm').action = '/books/update/' + book.id;
+    document.getElementById('edit_title').value = book.title || '';
+    document.getElementById('edit_author').value = book.author || '';
+    document.getElementById('edit_isbn').value = book.isbn || '';
+    document.getElementById('edit_category_id').value = book.category_id || '';
+    document.getElementById('edit_edition').value = book.edition || '';
+    document.getElementById('edit_publisher').value = book.publisher || '';
+    document.getElementById('edit_publish_year').value = book.publish_year || '';
+    document.getElementById('edit_total_copies').value = book.total_copies || 1;
+    document.getElementById('edit_description').value = book.description || '';
+    openModal('editBookModal');
+}
+</script>
+{% endblock %}

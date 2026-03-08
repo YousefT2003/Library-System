@@ -1,0 +1,178 @@
+{% extends "layout.html" %}
+{% block title %}Borrow / Return — LibraryMS{% endblock %}
+{% block page_title %}Borrow & Return{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary" onclick="openModal('lendModal')">
+    <span class="material-icons-outlined">add</span> Lend Book
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="filters-bar">
+    <form method="GET" action="{{ url_for('borrow.index') }}" class="filter-form">
+        <div class="input-icon">
+            <span class="material-icons-outlined">search</span>
+            <input type="text" name="search" placeholder="Search by book or student..." value="{{ search }}">
+        </div>
+        <select name="status" class="form-select">
+            <option value="">All Status</option>
+            <option value="borrowed" {% if status == 'borrowed' %}selected{% endif %}>Borrowed</option>
+            <option value="overdue" {% if status == 'overdue' %}selected{% endif %}>Overdue</option>
+            <option value="returned" {% if status == 'returned' %}selected{% endif %}>Returned</option>
+        </select>
+        <button type="submit" class="btn btn-secondary">Filter</button>
+    </form>
+</div>
+
+<!-- Records Table -->
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Book</th>
+                    <th>Borrow Date</th>
+                    <th>Due Date</th>
+                    <th>Return Date</th>
+                    <th>Status</th>
+                    <th>Fine</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr class="{% if r.status == 'overdue' %}row-overdue{% endif %}">
+                    <td><strong>{{ r.first_name }} {{ r.last_name }}</strong><br><small>{{ r.student_code }}</small></td>
+                    <td>{{ r.book_title }}<br><small><code>{{ r.isbn }}</code></small></td>
+                    <td>{{ r.borrow_date }}</td>
+                    <td>{{ r.due_date }}</td>
+                    <td>{{ r.return_date or '—' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if r.status == 'returned' else ('danger' if r.status == 'overdue' else 'warning') }}">
+                            {{ r.status | title }}
+                        </span>
+                    </td>
+                    <td>{% if r.fine_amount > 0 %}${{ "%.2f" | format(r.fine_amount) }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if r.status != 'returned' %}
+                        <form method="POST" action="{{ url_for('borrow.return_book', record_id=r.id) }}" class="inline-form">
+                            <button type="submit" class="btn btn-sm btn-success" title="Return Book">
+                                <span class="material-icons-outlined">assignment_return</span> Return
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">Completed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="empty-state">No borrow records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Lend Book Modal -->
+<div class="modal-overlay" id="lendModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Lend a Book</h2>
+            <button class="modal-close" onclick="closeModal('lendModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('borrow.lend') }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Search Student</label>
+                    <input type="text" id="studentSearch" placeholder="Type student name or ID..." autocomplete="off">
+                    <div class="search-results" id="studentResults"></div>
+                    <input type="hidden" name="student_id" id="selectedStudentId" required>
+                    <div id="selectedStudentName" class="selected-tag"></div>
+                </div>
+                <div class="form-group">
+                    <label>Search Book</label>
+                    <input type="text" id="bookSearch" placeholder="Type book title or ISBN..." autocomplete="off">
+                    <div class="search-results" id="bookResults"></div>
+                    <input type="hidden" name="book_id" id="selectedBookId" required>
+                    <div id="selectedBookName" class="selected-tag"></div>
+                </div>
+                <div class="form-group">
+                    <label>Borrow Duration (days)</label>
+                    <input type="number" name="borrow_days" value="14" min="1" max="90">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('lendModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Confirm Lending</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live search for students
+let studentTimer;
+document.getElementById('studentSearch').addEventListener('input', function() {
+    clearTimeout(studentTimer);
+    const q = this.value.trim();
+    if (q.length < 2) { document.getElementById('studentResults').innerHTML = ''; return; }
+    studentTimer = setTimeout(() => {
+        fetch('/students/api/search?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('studentResults');
+                el.innerHTML = data.map(s =>
+                    `<div class="search-result-item" onclick="selectStudent(${s.id}, '${s.name} (${s.student_id})')">
+                        <strong>${s.name}</strong> — ${s.student_id} — ${s.department || ''}
+                    </div>`
+                ).join('') || '<div class="search-result-item">No results</div>';
+            });
+    }, 300);
+});
+
+function selectStudent(id, name) {
+    document.getElementById('selectedStudentId').value = id;
+    document.getElementById('selectedStudentName').textContent = name;
+    document.getElementById('selectedStudentName').style.display = 'block';
+    document.getElementById('studentResults').innerHTML = '';
+    document.getElementById('studentSearch').value = '';
+}
+
+// Live search for books
+let bookTimer;
+document.getElementById('bookSearch').addEventListener('input', function() {
+    clearTimeout(bookTimer);
+    const q = this.value.trim();
+    if (q.length < 2) { document.getElementById('bookResults').innerHTML = ''; return; }
+    bookTimer = setTimeout(() => {
+        fetch('/books/api/search?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('bookResults');
+                el.innerHTML = data.map(b =>
+                    `<div class="search-result-item ${b.available_copies <= 0 ? 'disabled' : ''}"
+                          onclick="${b.available_copies > 0 ? `selectBook(${b.id}, '${b.title}')` : ''}">
+                        <strong>${b.title}</strong> — ${b.author}
+                        <span class="badge badge-${b.available_copies > 0 ? 'success' : 'danger'}">${b.available_copies} avail</span>
+                    </div>`
+                ).join('') || '<div class="search-result-item">No results</div>';
+            });
+    }, 300);
+});
+
+function selectBook(id, title) {
+    document.getElementById('selectedBookId').value = id;
+    document.getElementById('selectedBookName').textContent = title;
+    document.getElementById('selectedBookName').style.display = 'block';
+    document.getElementById('bookResults').innerHTML = '';
+    document.getElementById('bookSearch').value = '';
+}
+</script>
+{% endblock %}
