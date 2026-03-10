@@ -9,7 +9,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Search & Filters -->
 <div class="filters-bar">
     <form method="GET" action="{{ url_for('books.index') }}" class="filter-form">
         <div class="input-icon">
@@ -30,7 +29,6 @@
     </form>
 </div>
 
-<!-- Books Table -->
 <div class="card">
     <div class="card-body table-responsive">
         <table class="table">
@@ -61,6 +59,10 @@
                     </td>
                     <td>{{ book.total_copies }}</td>
                     <td class="actions-cell">
+                        <a href="{{ url_for('books.generate_barcode', book_id=book.id) }}" 
+                           class="btn btn-sm btn-info" title="Generate Barcode">
+                            <span class="material-icons-outlined">qr_code</span>
+                        </a>
                         <button class="btn btn-sm btn-secondary" onclick='openEditBook({{ book | tojson }})'>
                             <span class="material-icons-outlined">edit</span>
                         </button>
@@ -80,7 +82,6 @@
     </div>
 </div>
 
-<!-- Pagination -->
 {% if total > per_page %}
 <div class="pagination">
     {% set pages = (total / per_page) | round(0, 'ceil') | int %}
@@ -93,7 +94,6 @@
 {% endblock %}
 
 {% block modals %}
-<!-- Add Book Modal -->
 <div class="modal-overlay" id="addBookModal">
     <div class="modal">
         <div class="modal-header">
@@ -160,7 +160,6 @@
     </div>
 </div>
 
-<!-- Edit Book Modal -->
 <div class="modal-overlay" id="editBookModal">
     <div class="modal">
         <div class="modal-header">
