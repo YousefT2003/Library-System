@@ -3,6 +3,7 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
+
 <!-- Summary Cards -->
 <div class="stats-grid">
     <div class="stat-card stat-books">
@@ -35,7 +36,22 @@
     </div>
 </div>
 
+<!-- Charts Section -->
+<div class="charts-grid">
+    <div class="chart-card">
+        <h2>Most Borrowed Categories</h2>
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+        <h2>Borrowings Per Month</h2>
+        <canvas id="barChart"></canvas>
+    </div>
+</div>
+
+<!-- Existing Dashboard Sections -->
 <div class="dashboard-grid">
+
     <!-- Most Borrowed Books -->
     <div class="card">
         <div class="card-header">
@@ -135,5 +151,91 @@
             {% endif %}
         </div>
     </div>
+
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+fetch('/dashboard-data')
+  .then(res => res.json())
+  .then(data => {
+
+    // PIE CHART
+    const pieLabels = data.pie.map(item => item.category);
+    const pieValues = data.pie.map(item => item.borrow_count);
+
+   new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: pieLabels,
+    datasets: [{
+      data: pieValues,
+      backgroundColor: [
+        '#A3CEF1',
+        '#FFB5E8',
+        '#B8F2E6',
+        '#F7D6E0',
+        '#C8C6FA',
+        '#FFD6A5'
+      ],
+      borderColor: '#fff',
+      borderWidth: 2,
+      hoverOffset: 12,
+      borderRadius: 10
+    }]
+  },
+  options: {
+    cutout: '60%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle'
+        }
+      }
+    }
+  }
+});
+
+    // BAR CHART
+    const barLabels = data.bar.map(item => item.month);
+    const barValues = data.bar.map(item => item.borrow_count);
+
+    new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: barLabels,
+    datasets: [{
+      label: 'Borrowings per Month',
+      data: barValues,
+      backgroundColor: '#36a2eb',
+      borderColor: '#ffffff',
+      borderWidth: 2,
+      borderRadius: 8
+    }]
+  },
+  options: {
+    scales: {
+      x: {
+        barPercentage: 0.5,
+        categoryPercentage: 0.5
+      },
+      y: {
+        beginAtZero: true
+      }
+    },
+    plugins: {
+      legend: { display: false }
+    }
+  }
+});
+
+  });
+</script>
 {% endblock %}
