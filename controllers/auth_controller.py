@@ -109,3 +109,8 @@ class AuthController:
 
         flash("تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.", "success")
         return redirect(url_for('auth.login'))
+    
+    import time
+    start = time.time()
+    user = LibrarianModel.get_by_username(username)
+    print("DB query time:", time.time() - start)
