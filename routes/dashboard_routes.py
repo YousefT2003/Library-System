@@ -36,3 +36,9 @@ def chart_months():
     conn.close()
 
     return jsonify(data)
+
+
+# ⭐ FIXED — this must NOT be indented inside chart_months()
+@dashboard_bp.route('/dashboard-data')
+def dashboard_data():
+    return DashboardController.get_dashboard_data()
