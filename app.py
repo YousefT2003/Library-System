@@ -5,8 +5,7 @@ A production-ready Flask application for managing books,
 students, and lending operations in an educational institution.
 """
 
-from database.connection import get_pool
-get_pool()   # Initialize DB pool early
+
 
 import os
 from flask import Flask
