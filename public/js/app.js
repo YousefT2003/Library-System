@@ -71,3 +71,85 @@ document.addEventListener('click', function(e) {
         sidebar.classList.remove('open');
     }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* PIE CHART - Most Borrowed Categories */
+    const pieCanvas = document.getElementById("pieChart");
+
+    if (pieCanvas) {
+        new Chart(pieCanvas, {
+            type: "pie",
+            data: {
+                labels: [
+                    "Science",
+                    "Technology",
+                    "Literature",
+                    "History",
+                    "Other"
+                ],
+                datasets: [{
+                    label: "Borrowed Categories",
+                    data: [12, 19, 8, 10, 5],
+                    backgroundColor: [
+                        "#4a90e2",
+                        "#50e3c2",
+                        "#f5a623",
+                        "#e74c3c",
+                        "#9b59b6"
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+    }
+
+
+    /* BAR CHART - Borrowings Per Month */
+    const barCanvas = document.getElementById("barChart");
+
+    if (barCanvas) {
+        new Chart(barCanvas, {
+            type: "bar",
+            data: {
+                labels: [
+                    "Jan","Feb","Mar","Apr","May","Jun",
+                    "Jul","Aug","Sep","Oct","Nov","Dec"
+                ],
+                datasets: [{
+                    label: "Borrowings",
+                    data: [5, 8, 12, 6, 9, 15, 7, 10, 14, 11, 8, 6],
+                    backgroundColor: "#4a90e2",
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
