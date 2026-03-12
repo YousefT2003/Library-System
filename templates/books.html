@@ -15,16 +15,22 @@
             <span class="material-icons-outlined">search</span>
             <input type="text" name="search" placeholder="Search by title, author, ISBN..." value="{{ search }}">
         </div>
-        <select name="category_id" class="form-select">
+        
+        {# التعديل هنا: إضافة onchange للفلترة السريعة وتحويل الـ ID لنص للمقارنة الصحيحة #}
+        <select name="category_id" class="form-select" onchange="this.form.submit()">
             <option value="">All Categories</option>
             {% for cat in categories %}
-            <option value="{{ cat.id }}" {% if cat.id == category_id %}selected{% endif %}>{{ cat.name }}</option>
+            <option value="{{ cat.id }}" {% if cat.id|string == category_id|string %}selected{% endif %}>
+                {{ cat.name }}
+            </option>
             {% endfor %}
         </select>
+
         <label class="checkbox-label">
-            <input type="checkbox" name="available_only" value="1" {% if available_only %}checked{% endif %}>
+            <input type="checkbox" name="available_only" value="1" {% if available_only %}checked{% endif %} onchange="this.form.submit()">
             Available Only
         </label>
+        
         <button type="submit" class="btn btn-secondary">Filter</button>
     </form>
 </div>
@@ -94,6 +100,7 @@
 {% endblock %}
 
 {% block modals %}
+{# --- Modal: Add Book --- #}
 <div class="modal-overlay" id="addBookModal">
     <div class="modal">
         <div class="modal-header">
@@ -160,6 +167,7 @@
     </div>
 </div>
 
+{# --- Modal: Edit Book --- #}
 <div class="modal-overlay" id="editBookModal">
     <div class="modal">
         <div class="modal-header">
@@ -230,7 +238,10 @@
 {% block scripts %}
 <script>
 function openEditBook(book) {
+    // تحديث رابط الـ Form بالـ ID الصحيح
     document.getElementById('editBookForm').action = '/books/update/' + book.id;
+    
+    // تعبئة البيانات في الحقول
     document.getElementById('edit_title').value = book.title || '';
     document.getElementById('edit_author').value = book.author || '';
     document.getElementById('edit_isbn').value = book.isbn || '';
@@ -240,6 +251,7 @@ function openEditBook(book) {
     document.getElementById('edit_publish_year').value = book.publish_year || '';
     document.getElementById('edit_total_copies').value = book.total_copies || 1;
     document.getElementById('edit_description').value = book.description || '';
+    
     openModal('editBookModal');
 }
 </script>
