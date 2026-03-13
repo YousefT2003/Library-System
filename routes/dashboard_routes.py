@@ -5,7 +5,7 @@ Dashboard Routes — URL routing for the dashboard.
 from flask import Blueprint, jsonify
 from controllers.dashboard_controller import DashboardController
 from controllers.auth_controller import login_required
-from database.connection import get_connection   # <-- IMPORTANT
+from database.connection import get_connection
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -18,7 +18,7 @@ def index():
 
 @dashboard_bp.route('/chart-data/months')
 def chart_months():
-    conn = get_connection()  # <-- get pooled connection
+    conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
@@ -38,7 +38,8 @@ def chart_months():
     return jsonify(data)
 
 
-# ⭐ FIXED — this must NOT be indented inside chart_months()
+# الرابط الذي سيتصل به الجافاسكريبت لجلب بيانات الشارتات كاملة
 @dashboard_bp.route('/dashboard-data')
+@login_required # يفضل إضافته للأمان
 def dashboard_data():
     return DashboardController.get_dashboard_data()

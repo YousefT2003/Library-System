@@ -44,7 +44,7 @@ class DashboardController:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # PIE CHART
+        # 1. PIE CHART - جلب البيانات وتنسيقها للجافاسكريبت
         cursor.execute("""
             SELECT c.name AS category, COUNT(*) AS borrow_count
             FROM borrow_records br
@@ -52,18 +52,35 @@ class DashboardController:
             JOIN categories c ON b.category_id = c.id
             GROUP BY c.name
         """)
-        pie_data = cursor.fetchall()
+        pie_results = cursor.fetchall()
+        
+        # تحويل النتائج إلى قوائم منفصلة (للسهولة في JS)
+        pie_labels = [row['category'] for row in pie_results]
+        pie_values = [row['borrow_count'] for row in pie_results]
 
-        # BAR CHART
+        # 2. BAR CHART - جلب البيانات وترتيبها حسب الأشهر
         cursor.execute("""
             SELECT DATE_FORMAT(br.borrow_date, '%b') AS month, COUNT(*) AS borrow_count
             FROM borrow_records br
             GROUP BY month
             ORDER BY MONTH(STR_TO_DATE(month, '%b'))
         """)
-        bar_data = cursor.fetchall()
+        bar_results = cursor.fetchall()
+        
+        bar_labels = [row['month'] for row in bar_results]
+        bar_values = [row['borrow_count'] for row in bar_results]
 
         cursor.close()
         conn.close()
 
-        return jsonify({"pie": pie_data, "bar": bar_data})
+        # إرسال البيانات بشكل منظم
+        return jsonify({
+            "pie": {
+                "labels": pie_labels,
+                "values": pie_values
+            },
+            "bar": {
+                "labels": bar_labels,
+                "values": bar_values
+            }
+        })

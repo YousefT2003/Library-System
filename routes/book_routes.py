@@ -14,49 +14,33 @@ book_bp = Blueprint('books', __name__, url_prefix='/books')
 @book_bp.route('/')
 @login_required
 def index():
-    """
-    List all books, optionally filtered via query params:
-    - search
-    - category_id
-    - available_only
-    - page
-    All handled inside BookController.index()
-    """
-    return BookController.index()  # Do NOT pass search here
-
+    return BookController.index()
 
 @book_bp.route('/create', methods=['POST'])
 @login_required
 def create():
     return BookController.create()
 
-
 @book_bp.route('/update/<int:book_id>', methods=['POST'])
 @login_required
 def update(book_id):
     return BookController.update(book_id)
-
 
 @book_bp.route('/delete/<int:book_id>', methods=['POST'])
 @login_required
 def delete(book_id):
     return BookController.delete(book_id)
 
-
 @book_bp.route('/api/search')
 @login_required
 def api_search():
     """
-    Optional: AJAX endpoint for live search/filtering.
-    Pass query param 'q' for search term.
+    AJAX endpoint for live search.
+    Calls search_api from BookController.
     """
-    return BookController.api_search()
-
+    return BookController.search_api()
 
 @book_bp.route('/generate-barcode/<int:book_id>')
 @login_required
 def generate_barcode(book_id):
-    """
-    Route to generate barcode image for the selected book.
-    """
     return BookController.generate_barcode(book_id)

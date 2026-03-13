@@ -19,7 +19,6 @@ function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('active');
-        // Focus first input in the modal
         setTimeout(() => {
             const input = modal.querySelector('input:not([type="hidden"])');
             if (input) input.focus();
@@ -37,21 +36,18 @@ function closeModal(modalId) {
     }
 }
 
-// Close modal when clicking overlay background
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('modal-overlay')) {
         e.target.classList.remove('active');
     }
 });
 
-// Close modal on Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
     }
 });
 
-// Auto-dismiss flash messages after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         document.querySelectorAll('.flash').forEach(flash => {
@@ -62,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
 });
 
-// Close sidebar on mobile when clicking outside
 document.addEventListener('click', function(e) {
     const sidebar = document.getElementById('sidebar');
     const toggle = document.querySelector('.menu-toggle');
@@ -73,61 +68,52 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+    
+    // متغيرات الشارتات
+    let pieChart, barChart;
+
+    // دالة لتنظيف الشارتات القديمة قبل الرسم
+    function destroyChart(canvasId) {
+        const existingChart = Chart.getChart(canvasId);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+    }
 
     /* PIE CHART - Most Borrowed Categories */
     const pieCanvas = document.getElementById("pieChart");
-
     if (pieCanvas) {
-        new Chart(pieCanvas, {
+        destroyChart("pieChart"); // تدمير أي شارت قديم
+        pieChart = new Chart(pieCanvas, {
             type: "pie",
             data: {
-                labels: [
-                    "Science",
-                    "Technology",
-                    "Literature",
-                    "History",
-                    "Other"
-                ],
+                labels: [], 
                 datasets: [{
                     label: "Borrowed Categories",
-                    data: [12, 19, 8, 10, 5],
-                    backgroundColor: [
-                        "#4a90e2",
-                        "#50e3c2",
-                        "#f5a623",
-                        "#e74c3c",
-                        "#9b59b6"
-                    ],
+                    data: [], 
+                    backgroundColor: ["#4a90e2", "#50e3c2", "#f5a623", "#e74c3c", "#9b59b6"],
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: "bottom"
-                    }
-                }
+                plugins: { legend: { position: "bottom" } }
             }
         });
     }
 
-
     /* BAR CHART - Borrowings Per Month */
     const barCanvas = document.getElementById("barChart");
-
     if (barCanvas) {
-        new Chart(barCanvas, {
+        destroyChart("barChart"); // تدمير أي شارت قديم
+        barChart = new Chart(barCanvas, {
             type: "bar",
             data: {
-                labels: [
-                    "Jan","Feb","Mar","Apr","May","Jun",
-                    "Jul","Aug","Sep","Oct","Nov","Dec"
-                ],
+                labels: [], 
                 datasets: [{
                     label: "Borrowings",
-                    data: [5, 8, 12, 6, 9, 15, 7, 10, 14, 11, 8, 6],
+                    data: [], 
                     backgroundColor: "#4a90e2",
                     borderRadius: 6
                 }]
@@ -135,21 +121,31 @@ document.addEventListener("DOMContentLoaded", function () {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
+                        ticks: { precision: 0 }
                     }
                 }
             }
         });
     }
 
+    // جلب البيانات وتحديث الشارتات
+    fetch('/dashboard-data')
+        .then(response => response.json())
+        .then(data => {
+            if (pieChart) {
+                pieChart.data.labels = data.pie.labels;
+                pieChart.data.datasets[0].data = data.pie.values;
+                pieChart.update();
+            }
+            if (barChart) {
+                barChart.data.labels = data.bar.labels;
+                barChart.data.datasets[0].data = data.bar.values;
+                barChart.update();
+            }
+        })
+        .catch(err => console.error("Error fetching dashboard data:", err));
 });

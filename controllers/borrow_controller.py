@@ -7,7 +7,6 @@ from models.borrow_model import BorrowModel
 from models.book_model import BookModel
 from models.student_model import StudentModel
 
-
 class BorrowController:
 
     @staticmethod
@@ -19,12 +18,20 @@ class BorrowController:
         # Auto-mark overdue records
         BorrowModel.mark_overdue()
 
+        # --- الجزء المعدل: جلب البيانات للقوائم المنسدلة ---
+        # جلب جميع الكتب المتاحة والطلاب لعرضهم في صفحة الاستعارة
+        books = BookModel.get_all() # يمكنك استخدام BookModel.get_all_available() إذا كانت موجودة
+        students = StudentModel.get_all()
+        # --------------------------------------------------
+
         records = BorrowModel.get_all(status=status or None, search=search, page=page)
         total = BorrowModel.count(status=status or None)
 
+        # تمرير المتغيرات الجديدة (books و students) للقالب
         return render_template('borrow.html', records=records,
                                status=status, search=search,
-                               page=page, total=total, per_page=20)
+                               page=page, total=total, per_page=20,
+                               books=books, students=students)
 
     @staticmethod
     def lend():
